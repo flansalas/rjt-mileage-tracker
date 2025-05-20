@@ -1,12 +1,21 @@
 import streamlit as st
 import pandas as pd
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 from datetime import date
 
 st.set_page_config(page_title="RJT Mileage Tracker", page_icon="🚗")
-
 st.title("🚗 RJT Mileage Logger")
 
-# Input form
+# Google Sheets Setup
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gspread"], scope)
+client = gspread.authorize(credentials)
+
+# Open the sheet
+sheet = client.open("RJT Mileage Log").worksheet("Trips")
+
+# Form input
 with st.form("log_trip"):
     trip_date = st.date_input("Date", value=date.today())
     driver = st.text_input("Driver Name")
@@ -15,41 +24,18 @@ with st.form("log_trip"):
     odo_end = st.number_input("Odometer End", min_value=0)
     rate = 0.67
     notes = st.text_area("Notes", "")
-
     submitted = st.form_submit_button("Submit Trip")
 
 if submitted:
     miles = round(odo_end - odo_start, 2)
     reimbursement = round(miles * rate, 2)
-    
-    new_data = {
-        "Date": [trip_date],
-        "Driver": [driver],
-        "Job": [job],
-        "Odo Start": [odo_start],
-        "Odo End": [odo_end],
-        "Miles": [miles],
-        "Reimbursement": [reimbursement],
-        "Notes": [notes]
-    }
 
-    df_new = pd.DataFrame(new_data)
-
-    # Load or create trip log CSV
-    try:
-        df = pd.read_csv("trip_log.csv")
-        df = pd.concat([df, df_new], ignore_index=True)
-    except FileNotFoundError:
-        df = df_new
-
-    df.to_csv("trip_log.csv", index=False)
-
+    row = [str(trip_date), driver, job, odo_start, odo_end, miles, reimbursement, notes]
+    sheet.append_row(row)
     st.success(f"Trip logged! {miles} miles – ${reimbursement:.2f}")
 
-# Display trip log
+# Display table
+data = sheet.get_all_records()
+df = pd.DataFrame(data)
 st.subheader("📋 Trip History")
-try:
-    df = pd.read_csv("trip_log.csv")
-    st.dataframe(df)
-except FileNotFoundError:
-    st.info("No trips logged yet.")
+st.dataframe(df)
