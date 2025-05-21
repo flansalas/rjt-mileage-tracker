@@ -29,8 +29,7 @@ with st.form("log_trip"):
 if submitted:
     miles = round(odo_end - odo_start, 2)
     reimbursement = round(miles * rate, 2)
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+    timestamp = datetime.now().strftime("%b %d, %Y – %I:%M %p")
     row = [str(trip_date), driver, job, odo_start, odo_end, miles, reimbursement, notes, timestamp]
     sheet.append_row(row)
     st.success(f"Trip logged for {driver}: {miles} miles – ${reimbursement:.2f}")
