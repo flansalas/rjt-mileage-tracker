@@ -4,7 +4,6 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 st.set_page_config(page_title="Admin View", page_icon="🧾")
-st.sidebar.title("🧭 RJT Navigation")
 st.title("🧾 GM Admin Dashboard")
 
 # Auth
@@ -23,48 +22,57 @@ if "Timestamp" in df.columns:
 else:
     df["Timestamp"] = pd.NaT
 
-# Sidebar Filters
+# 🔐 Admin PIN gate
 with st.sidebar:
-    st.header("🔍 Filters")
+    st.header("🔐 Admin Access")
+    admin_pin = st.text_input("Enter Admin PIN", type="password")
 
-    driver_filter = st.multiselect(
-        "Driver", options=df["Driver"].unique(), default=df["Driver"].unique()
-    )
+# Only show dashboard if PIN is correct
+if admin_pin == st.secrets["admin"]["pin"]:
+    with st.sidebar:
+        st.header("🔍 Filters")
 
-    trip_date_range = st.date_input("Trip Date Range", [])
-    job_filter = st.text_input("Job or Client (optional)")
+        driver_filter = st.multiselect(
+            "Driver", options=df["Driver"].unique(), default=df["Driver"].unique()
+        )
 
-    timestamp_range = st.date_input("Log Timestamp Range", [])
+        trip_date_range = st.date_input("Trip Date Range", [])
+        job_filter = st.text_input("Job or Client (optional)")
 
-# Apply Filters
-if driver_filter:
-    df = df[df["Driver"].isin(driver_filter)]
+        timestamp_range = st.date_input("Log Timestamp Range", [])
 
-if len(trip_date_range) == 2:
-    df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
-    df = df[
-        (df["Date"] >= pd.to_datetime(trip_date_range[0])) &
-        (df["Date"] <= pd.to_datetime(trip_date_range[1]))
-    ]
+    # Apply filters
+    if driver_filter:
+        df = df[df["Driver"].isin(driver_filter)]
 
-if len(timestamp_range) == 2 and df["Timestamp"].notnull().any():
-    df = df[
-        (df["Timestamp"] >= pd.to_datetime(timestamp_range[0])) &
-        (df["Timestamp"] <= pd.to_datetime(timestamp_range[1]) + pd.Timedelta(days=1))
-    ]
+    if len(trip_date_range) == 2:
+        df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
+        df = df[
+            (df["Date"] >= pd.to_datetime(trip_date_range[0])) &
+            (df["Date"] <= pd.to_datetime(trip_date_range[1]))
+        ]
 
-if job_filter:
-    df = df[df["Job"].astype(str).str.contains(job_filter, case=False)]
+    if len(timestamp_range) == 2 and df["Timestamp"].notnull().any():
+        df = df[
+            (df["Timestamp"] >= pd.to_datetime(timestamp_range[0])) &
+            (df["Timestamp"] <= pd.to_datetime(timestamp_range[1]) + pd.Timedelta(days=1))
+        ]
 
-# Summary
-st.subheader("📊 Totals")
-st.write(f"**Total Miles:** {df['Miles'].sum():,.2f}")
-st.write(f"**Total Reimbursement:** ${df['Reimbursement'].sum():,.2f}")
+    if job_filter:
+        df = df[df["Job"].astype(str).str.contains(job_filter, case=False)]
 
-# Display filtered results
-st.subheader("📋 Filtered Trip Log")
-st.dataframe(df)
+    # Summary
+    st.subheader("📊 Totals")
+    st.write(f"**Total Miles:** {df['Miles'].sum():,.2f}")
+    st.write(f"**Total Reimbursement:** ${df['Reimbursement'].sum():,.2f}")
 
-# Download
-csv = df.to_csv(index=False).encode("utf-8")
-st.download_button("📥 Download CSV", csv, "filtered_trip_log.csv", "text/csv")
+    # Display filtered table
+    st.subheader("📋 Filtered Trip Log")
+    st.dataframe(df)
+
+    # Download
+    csv = df.to_csv(index=False).encode("utf-8")
+    st.download_button("📥 Download CSV", csv, "filtered_trip_log.csv", "text/csv")
+
+else:
+    st.warning("🔒 Admin PIN required to access dashboard.")
