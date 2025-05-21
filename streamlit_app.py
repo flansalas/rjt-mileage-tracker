@@ -6,6 +6,7 @@ from datetime import date, datetime
 from zoneinfo import ZoneInfo  # ✅ Works on Python 3.9+
 
 st.set_page_config(page_title="RJT Mileage Tracker", page_icon="🚗")
+st.sidebar.title("🧭 RJT Navigation")
 st.title("🚗 RJT Mileage Logger")
 
 # Google Sheets Setup
