@@ -3,6 +3,7 @@ import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import date, datetime
+from zoneinfo import ZoneInfo  # ✅ Works on Python 3.9+
 
 st.set_page_config(page_title="RJT Mileage Tracker", page_icon="🚗")
 st.title("🚗 RJT Mileage Logger")
@@ -29,10 +30,14 @@ with st.form("log_trip"):
 if submitted:
     miles = round(odo_end - odo_start, 2)
     reimbursement = round(miles * rate, 2)
-    timestamp = datetime.now().strftime("%b %d, %Y – %I:%M %p")
+
+    # 🕒 Timestamp in Central Time
+    central_time = datetime.now(ZoneInfo("America/Chicago"))
+    timestamp = central_time.strftime("%b %d, %Y – %I:%M %p")
+
     row = [str(trip_date), driver, job, odo_start, odo_end, miles, reimbursement, notes, timestamp]
     sheet.append_row(row)
-    st.success(f"Trip logged for {driver}: {miles} miles – ${reimbursement:.2f}")
+    st.success(f"Trip logged! {miles} miles – ${reimbursement:.2f}")
 
 # Display table
 data = sheet.get_all_records()
