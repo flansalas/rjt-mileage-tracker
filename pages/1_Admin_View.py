@@ -3,9 +3,8 @@ import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-st.set_page_config(page_title="Admin View", page_icon="🧮")
-
-st.title("🧮 GM Admin Dashboard")
+st.set_page_config(page_title="Admin View", page_icon="🧾")
+st.title("🧾 GM Admin Dashboard")
 
 # Auth
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -40,7 +39,7 @@ st.subheader("📊 Totals")
 st.write(f"**Total Miles:** {df['Miles'].sum():,.2f}")
 st.write(f"**Total Reimbursement:** ${df['Reimbursement'].sum():,.2f}")
 
-# Display filtered table
+# Display table
 st.subheader("📋 Filtered Trip Log")
 st.dataframe(df)
 
